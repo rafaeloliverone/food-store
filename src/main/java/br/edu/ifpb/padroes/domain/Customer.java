@@ -10,6 +10,10 @@ public class Customer {
 
     private String address;
 
+    public Customer(String email) {
+        this.email = email;
+    }
+
     public Long getId() {
         return id;
     }

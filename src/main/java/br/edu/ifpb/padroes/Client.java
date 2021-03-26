@@ -9,7 +9,7 @@ public class Client {
 
         Order order = new Order();
         OrderManager orderManager = new OrderManager(order);
-        orderManager.payOrder(PaymentService.PaymentType.CREDIT_CARD);
+        orderManager.payOrder();
         orderManager.cancelOrder();
 
     }

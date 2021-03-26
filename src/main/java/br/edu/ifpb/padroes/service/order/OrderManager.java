@@ -1,10 +1,15 @@
 package br.edu.ifpb.padroes.service.order;
 
+import br.edu.ifpb.padroes.domain.Administrator;
+import br.edu.ifpb.padroes.domain.Customer;
 import br.edu.ifpb.padroes.domain.Order;
 import br.edu.ifpb.padroes.service.log.LogHandler;
 import br.edu.ifpb.padroes.service.log.LogService;
+import br.edu.ifpb.padroes.service.mail.AdministratorNotification;
+import br.edu.ifpb.padroes.service.mail.CustomerNotification;
+import br.edu.ifpb.padroes.service.payment.PaymentCreditCard;
+import br.edu.ifpb.padroes.service.payment.PaymentPayPal;
 import br.edu.ifpb.padroes.service.payment.PaymentService;
-import br.edu.ifpb.padroes.service.mail.EmailNotification;
 
 public class OrderManager {
 
@@ -14,29 +19,35 @@ public class OrderManager {
 
     private Order order;
 
-    private EmailNotification emailNotification = new EmailNotification();
+    private CustomerNotification customerNotification = new CustomerNotification();
 
-    private PaymentService paymentService = new PaymentService();
+    private AdministratorNotification administratorNotification = new AdministratorNotification();
+
+
+    private PaymentService paymentService = new PaymentService(new PaymentPayPal());
 
     private LogService logService = new LogService(new LogHandler(LogHandler.LogHandlerType.FILE));
 
-    public void payOrder(PaymentService.PaymentType paymentType) {
+    public void payOrder() {
         order.setStatus(Order.OrderStatus.IN_PROGRESS);
         try {
-            paymentService.doPayment(paymentType);
+
+            paymentService.doPayment();
             order.setStatus(Order.OrderStatus.PAYMENT_SUCCESS);
-            emailNotification.sendMailNotification(String.format("Order %d completed successfully", order.getId()));
+            customerNotification.sendMailNotification(String.format("Order %d completed successfully", order.getId()), new Customer("rafael@gmail.com"));
             logService.info("payment finished");
         } catch (Exception e) {
             logService.error("payment refused");
             order.setStatus(Order.OrderStatus.PAYMENT_REFUSED);
-            emailNotification.sendMailNotification(String.format("Order %d refused", order.getId()));
+            customerNotification.sendMailNotification(String.format("Order %d refused", order.getId()), new Customer("rafael@gmail.com"));
         }
     }
 
     public void cancelOrder() {
         order.setStatus(Order.OrderStatus.CANCELED);
-        emailNotification.sendMailNotification(String.format("Order %d canceled", order.getId()));
+        customerNotification.sendMailNotification(String.format("Order %d canceled", order.getId()), new Customer("rafael@gmail.com"));
+        administratorNotification.sendMailNotification(String.format("Order %d canceled", order.getId()), new Administrator("Admin", "admin@gmail.com"));
+
         logService.debug(String.format("order %d canceled", order.getId()));
     }
 
